@@ -143,7 +143,7 @@ def render_backtest(records: list[BacktestRecord]) -> str:
                 cells.append(f"{'N/A':>10}")
             else:
                 n_valid = sum(1 for r in recs if r.returns.get(fwd) is not None)
-                cells.append(f"  {wr*100:3.0f}%{avg*100:+.1f}%")
+                cells.append(f"  {wr*100:3.0f}% {avg*100:+.1f}%")
         return f"  {label:<14}" + "".join(cells)
 
     lines.append(_row("全体", records))

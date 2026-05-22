@@ -186,7 +186,7 @@ def send_line_backtest(records: list) -> None:
             row_cells.append(f"+{fwd}d  N/A")
         else:
             emoji = "🔥" if (wr >= 0.7 and avg >= 0.05) else ("⚠" if avg < 0 else "")
-            row_cells.append(f"+{fwd}d  {wr*100:.0f}%{avg*100:+.1f}%{emoji}")
+            row_cells.append(f"+{fwd}d  {wr*100:.0f}% {avg*100:+.1f}%{emoji}")
     lines.append("【全体】")
     lines.extend(row_cells)
 
@@ -203,7 +203,7 @@ def send_line_backtest(records: list) -> None:
         if wr is None:
             continue
         emoji = "🔥" if (wr >= 0.7 and avg >= 0.05) else ("⚠" if avg < 0 else "")
-        theme_rows.append((avg, f"{theme[:10]}  {wr*100:.0f}%{avg*100:+.1f}%{emoji}"))
+        theme_rows.append((avg, f"{theme[:10]}  {wr*100:.0f}% {avg*100:+.1f}%{emoji}"))
 
     if theme_rows:
         lines.append("")
