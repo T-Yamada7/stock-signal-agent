@@ -11,6 +11,7 @@ import yaml
 from agent.data import fetch_prices
 from agent.signal import generate_signals, llm_evaluate
 from agent.notify import render, save_json, send_line
+from agent.backtest import run_backtest, render_backtest
 
 
 def load_config(path: str) -> dict:
@@ -24,6 +25,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dry-run", action="store_true", help="JSON保存せず標準出力だけ")
     p.add_argument("--json-only", action="store_true", help="標準出力を抑え、JSONだけ保存")
     p.add_argument("--notify-line", action="store_true", help="BUY候補をLINEに通知する")
+    p.add_argument("--backtest", action="store_true", help="バックテストを実行して結果を表示")
     p.add_argument("-v", "--verbose", action="store_true", help="DEBUGログを出す")
     return p.parse_args()
 
@@ -55,8 +57,13 @@ def main() -> int:
         print("すべての銘柄で価格データ取得に失敗しました。", file=sys.stderr)
         return 2
 
+    if args.backtest:
+        bt_records = run_backtest(price_data, watchlist, rules)
+        print(render_backtest(bt_records))
+        return 0
+
     signals = generate_signals(price_data, watchlist, rules)
-    signals = llm_evaluate(signals)  # 現状はパススルー
+    signals = llm_evaluate(signals)
 
     if not args.json_only:
         print(render(signals))
