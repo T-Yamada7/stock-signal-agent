@@ -3,6 +3,7 @@ name: Daily Stock Signal
 on:
   schedule:
     - cron: '0 0 * * 1-5'  # 平日 09:00 JST（UTC 00:00）
+    - cron: '0 0 1 * *'    # 毎月1日 09:00 JST（月次バックテスト用）
   workflow_dispatch:         # 手動実行ボタンも有効
 
 jobs:
@@ -27,7 +28,14 @@ jobs:
         run: python main.py --notify-line --dry-run
 
       - name: Weekly backtest & notify LINE (Monday only)
+        if: github.event.schedule == '0 0 * * 1-5'
         env:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
         run: |
           [ "$(date +%u)" = "1" ] && python main.py --backtest --notify-line || true
+
+      - name: Monthly backtest & notify LINE (1st of month)
+        if: github.event.schedule == '0 0 1 * *' || github.event_name == 'workflow_dispatch'
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        run: python main.py --backtest --backtest-months 3 --notify-line
