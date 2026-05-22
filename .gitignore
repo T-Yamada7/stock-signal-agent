@@ -6,3 +6,4 @@ signals/
 .env
 *.log
 .DS_Store
+TODO.md
