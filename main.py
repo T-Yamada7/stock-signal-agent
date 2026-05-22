@@ -6,6 +6,8 @@ import logging
 import sys
 from pathlib import Path
 
+log = logging.getLogger(__name__)
+
 import yaml
 
 from agent.data import fetch_prices
@@ -26,6 +28,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--json-only", action="store_true", help="標準出力を抑え、JSONだけ保存")
     p.add_argument("--notify-line", action="store_true", help="BUY候補をLINEに通知する")
     p.add_argument("--backtest", action="store_true", help="バックテストを実行して結果を表示")
+    p.add_argument("--backtest-months", type=int, default=2, choices=[2, 3, 6, 9, 12],
+                   help="バックテストの遡り期間（月数）。デフォルト2")
     p.add_argument("-v", "--verbose", action="store_true", help="DEBUGログを出す")
     return p.parse_args()
 
@@ -58,7 +62,14 @@ def main() -> int:
         return 2
 
     if args.backtest:
-        bt_records = run_backtest(price_data, watchlist, rules)
+        months = args.backtest_months
+        # 必要取得日数: MA75 + 遡り期間 + forward20日 + バッファ
+        bt_lookback_days = months * 30 + 250
+        if bt_lookback_days > lookback:
+            log.info("%dヶ月バックテスト用に %d日分のデータを再取得します...", months, bt_lookback_days)
+            price_data = fetch_prices(watchlist, lookback_days=bt_lookback_days)
+        bt_window = months * 21  # 月数 → 営業日数
+        bt_records = run_backtest(price_data, watchlist, rules, lookback_window=bt_window)
         print(render_backtest(bt_records))
         if args.notify_line:
             send_line_backtest(bt_records)
