@@ -10,7 +10,7 @@ import yaml
 
 from agent.data import fetch_prices
 from agent.signal import generate_signals, llm_evaluate
-from agent.notify import render, save_json
+from agent.notify import render, save_json, send_line
 
 
 def load_config(path: str) -> dict:
@@ -23,6 +23,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--config", default="config.yaml", help="設定ファイルのパス")
     p.add_argument("--dry-run", action="store_true", help="JSON保存せず標準出力だけ")
     p.add_argument("--json-only", action="store_true", help="標準出力を抑え、JSONだけ保存")
+    p.add_argument("--notify-line", action="store_true", help="BUY候補をLINEに通知する")
     p.add_argument("-v", "--verbose", action="store_true", help="DEBUGログを出す")
     return p.parse_args()
 
@@ -59,6 +60,9 @@ def main() -> int:
 
     if not args.json_only:
         print(render(signals))
+
+    if args.notify_line:
+        send_line(signals)
 
     if not args.dry_run:
         path = save_json(signals, json_dir)
