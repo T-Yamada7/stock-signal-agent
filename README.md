@@ -79,6 +79,8 @@ python main.py -v               # DEBUG ログ
 
 ## LINE 通知の設定
 
+友達追加はこちら → **https://lin.ee/xQcK2fJ**
+
 1. [LINE Developers Console](https://developers.line.biz/) でチャネルを作成（Messaging API）
 2. `Channel Access Token` を発行 → `.env` の `LINE_CHANNEL_ACCESS_TOKEN` に設定
 3. LINE Official Account の QR コードを共有するだけで友達全員に届く
