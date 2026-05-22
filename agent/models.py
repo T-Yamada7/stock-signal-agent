@@ -13,6 +13,7 @@ class Signal:
     risk_notes: str
     metrics: dict[str, Any] = field(default_factory=dict)
     generated_at: str = ""
+    llm_comment: str = ""
 
     def to_dict(self) -> dict:
         return asdict(self)

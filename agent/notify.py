@@ -64,6 +64,8 @@ def render(signals: list[Signal]) -> str:
             for r in s.reasons:
                 lines.append(f"    - {r}")
             if s.action == "buy_candidate":
+                if s.llm_comment:
+                    lines.append(f"    💬 {s.llm_comment}")
                 lines.append(f"    ⚠ {s.risk_notes}")
     return "\n".join(lines)
 
@@ -127,6 +129,8 @@ def send_line(signals: list[Signal]) -> None:
         symbol = s.symbol.ljust(5)
         name   = s.name[:10]
         lines.append(f"{emoji} {symbol} {name}  {s.conviction:.2f}  {codes}")
+        if s.llm_comment:
+            lines.append(f"  {s.llm_comment}")
 
     lines.append("\n─────────────────")
     lines.append("GC:ゴールデンクロス VL:出来高急増 MA:MA上抜け")
