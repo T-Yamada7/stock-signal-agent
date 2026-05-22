@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from datetime import datetime, timezone, timedelta
 
 from dotenv import load_dotenv
@@ -48,6 +49,38 @@ def _build_post(signals: list[Signal]) -> str | None:
     return "\n".join(lines)
 
 
+def _build_facets(text: str) -> list:
+    """URLとハッシュタグをリンク化するfacetsを生成する。
+    BlueskyはUTF-8バイトオフセットで位置を指定する必要がある。
+    """
+    try:
+        from atproto import models
+    except ImportError:
+        return []
+
+    facets = []
+
+    # URL
+    for m in re.finditer(r'https?://[^\s\n]+', text):
+        byte_start = len(text[:m.start()].encode('utf-8'))
+        byte_end   = len(text[:m.end()].encode('utf-8'))
+        facets.append(models.AppBskyRichtextFacet(
+            features=[models.AppBskyRichtextFacetLink(uri=m.group())],
+            index=models.AppBskyRichtextFacetByteSlice(byte_start=byte_start, byte_end=byte_end),
+        ))
+
+    # ハッシュタグ（日本語含む）
+    for m in re.finditer(r'#([^\s#\n]+)', text):
+        byte_start = len(text[:m.start()].encode('utf-8'))
+        byte_end   = len(text[:m.end()].encode('utf-8'))
+        facets.append(models.AppBskyRichtextFacet(
+            features=[models.AppBskyRichtextFacetTag(tag=m.group(1))],
+            index=models.AppBskyRichtextFacetByteSlice(byte_start=byte_start, byte_end=byte_end),
+        ))
+
+    return facets
+
+
 def send_bluesky(signals: list[Signal]) -> None:
     """BUY候補シグナルをBlueskyに投稿する。"""
     handle   = os.getenv("BSKY_HANDLE")
@@ -68,10 +101,11 @@ def send_bluesky(signals: list[Signal]) -> None:
         log.info("BUY候補なし。Bluesky投稿をスキップします。")
         return
 
+    facets = _build_facets(post)
     try:
         client = Client()
         client.login(handle, password)
-        client.send_post(text=post)
+        client.send_post(text=post, facets=facets)
         log.info("Bluesky投稿完了")
     except Exception as e:
         log.error("Bluesky投稿失敗: %s", e)
