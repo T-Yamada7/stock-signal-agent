@@ -33,7 +33,6 @@ watchlist:
   - { code: "TSM",  name: "TSMC",                   theme: "半導体/製造" }
 
   # ── フォトニクス ─────────────────────────────────
-  - { code: "6519", name: "QDレーザ",               theme: "フォトニクス" }
   - { code: "6965", name: "浜松ホトニクス",          theme: "フォトニクス" }
   - { code: "5803", name: "Fujikura",               theme: "フォトニクス" }
   - { code: "COHR", name: "Coherent Corp",          theme: "フォトニクス" }
@@ -45,7 +44,6 @@ watchlist:
   - { code: "QBTS", name: "D-Wave Quantum",         theme: "量子" }
 
   # ── 宇宙 ─────────────────────────────────────────
-  - { code: "5595", name: "QPS研究所",              theme: "宇宙" }
   - { code: "RKLB", name: "Rocket Lab",             theme: "宇宙" }
   - { code: "ASTS", name: "AST SpaceMobile",        theme: "宇宙" }
 
