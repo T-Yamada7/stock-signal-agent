@@ -13,7 +13,7 @@ import yaml
 from agent.data import fetch_prices
 from agent.signal import generate_signals, llm_evaluate
 from agent.notify import render, save_json, send_line, send_line_backtest
-from agent.x_post import send_x
+from agent.bluesky_post import send_bluesky
 from agent.backtest import run_backtest, render_backtest
 
 
@@ -28,7 +28,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--dry-run", action="store_true", help="JSON保存せず標準出力だけ")
     p.add_argument("--json-only", action="store_true", help="標準出力を抑え、JSONだけ保存")
     p.add_argument("--notify-line", action="store_true", help="BUY候補をLINEに通知する")
-    p.add_argument("--post-x", action="store_true", help="BUY候補をXに投稿する")
+    p.add_argument("--post-bsky", action="store_true", help="BUY候補をBlueskyに投稿する")
     p.add_argument("--backtest", action="store_true", help="バックテストを実行して結果を表示")
     p.add_argument("--backtest-months", type=int, default=2, choices=[2, 3, 6, 9, 12],
                    help="バックテストの遡り期間（月数）。デフォルト2")
@@ -86,8 +86,8 @@ def main() -> int:
     if args.notify_line:
         send_line(signals)
 
-    if args.post_x:
-        send_x(signals)
+    if args.post_bsky:
+        send_bluesky(signals)
 
     if not args.dry_run:
         path = save_json(signals, json_dir)
