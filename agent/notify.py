@@ -105,11 +105,10 @@ def _conviction_emoji(conviction: float, action: str) -> str:
 
 
 def send_line(signals: list[Signal]) -> None:
-    """シグナルをLINE Messaging APIでプッシュ通知する。"""
-    token   = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-    user_id = os.getenv("LINE_USER_ID")
-    if not token or not user_id:
-        log.warning("LINE_CHANNEL_ACCESS_TOKEN / LINE_USER_ID が未設定です。.env を確認してください。")
+    """シグナルをLINE Messaging APIでブロードキャスト通知する。"""
+    token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+    if not token:
+        log.warning("LINE_CHANNEL_ACCESS_TOKEN が未設定です。.env を確認してください。")
         return
 
     buy_signals = [s for s in signals if s.action == "buy_candidate"]
@@ -138,15 +137,12 @@ def send_line(signals: list[Signal]) -> None:
     message = "\n".join(lines)
 
     resp = requests.post(
-        "https://api.line.me/v2/bot/message/push",
+        "https://api.line.me/v2/bot/message/broadcast",
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         },
-        json={
-            "to": user_id,
-            "messages": [{"type": "text", "text": message}],
-        },
+        json={"messages": [{"type": "text", "text": message}]},
         timeout=10,
     )
     if resp.status_code == 200:
