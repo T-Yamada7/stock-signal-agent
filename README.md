@@ -1,55 +1,93 @@
 # stock-signal-agent
 
-日本株について、買い候補のシグナルを根拠付きで生成するローカル CLI ツール（プロトタイプ）。
-発注はしません。最後の判断は人間が行います。
+半導体・AI・量子・宇宙など注目テーマの日本株・米国株を対象に、買い候補シグナルを根拠付きで生成する CLI ツール。
+平日朝 9 時に GitHub Actions で自動実行し、LINE にブロードキャスト通知します。
+
+> 発注はしません。最後の判断は人間が行います。
 
 ## できること
 
-- `config.yaml` の watchlist 各銘柄について yfinance から日足を取得
-- 3つのルールでスコア化し、`conviction` 0.0〜1.0 を算出
-  - 25日線 > 75日線（ゴールデンクロス傾向） … +0.4
-  - 出来高 ≥ 20日平均 × `volume_spike_ratio` … +0.3
-  - 終値 > 25日線（短期上昇基調） … +0.3
+- `config.yaml` の watchlist（約 37 銘柄、日本株・米国株）から yfinance で日足を取得
+- 3 つのルールでスコア化し `conviction` 0.0〜1.0 を算出
+  - 25 日線 > 75 日線（ゴールデンクロス傾向） … +0.4
+  - 出来高 ≥ 20 日平均 × `volume_spike_ratio` … +0.3
+  - 終値 > 25 日線（短期上昇基調） … +0.3
 - `conviction ≥ 0.5` を `buy_candidate`、それ未満を `watch` として出力
-- 結果を標準出力に整形表示し、`./signals/YYYY-MM-DD.json` に保存
+- テーマ別グループ表示（半導体/製造装置・フォトニクス・量子・宇宙 など）
+- Claude Haiku による定性コメントを BUY 候補に付与（`ANTHROPIC_API_KEY` 設定時）
+- LINE にブロードキャスト通知（Bot を友達追加したユーザー全員に届く）
+- 結果を `./signals/YYYY-MM-DD.json` に保存
+
+## カバーしているテーマ
+
+| テーマ | 主な銘柄 |
+|--------|----------|
+| 半導体/製造装置 | 東京エレクトロン、KOKUSAI ELECTRIC、AMAT、ASML |
+| 半導体/設計 | NVIDIA、AMD、Arm Holdings、ソシオネクスト |
+| 半導体/メモリ | キオクシア、Micron Technology |
+| 半導体/素材・製造 | 信越化学工業、SUMCO、TSMC |
+| フォトニクス | 浜松ホトニクス、Fujikura、Coherent Corp |
+| 量子 | Rigetti Computing、D-Wave Quantum、IonQ |
+| 宇宙 | Rocket Lab、AST SpaceMobile |
+| ネオクラウド | さくらインターネット |
+| AI/DX | FIG |
+| 素材/資源・商社・自動車 | JX金属、伊藤忠商事、トヨタ自動車 |
 
 ## セットアップ
 
-Python 3.11+ を想定。venv を切るのを推奨します。
+Python 3.11+ を想定。
 
 ```bash
-cd ~/Desktop/dev/stock-signal-agent
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env   # 認証情報を .env に記入
+```
+
+`.env` に記入する項目：
+
+```env
+LINE_CHANNEL_ACCESS_TOKEN=...   # LINE Developers Console > Messaging API
+ANTHROPIC_API_KEY=...           # オプション。未設定時は LLM コメントをスキップ
 ```
 
 ## 実行
 
 ```bash
-python main.py             # 評価して標準出力 + JSON保存
-python main.py --dry-run   # JSON保存せず標準出力だけ
-python main.py --json-only # 標準出力を抑え、JSONだけ保存
-python main.py -v          # DEBUGログを出す
+python main.py                  # 評価 + 標準出力 + JSON 保存
+python main.py --notify-line    # 上記 + LINE ブロードキャスト
+python main.py --dry-run        # JSON 保存なし
+python main.py -v               # DEBUG ログ
 ```
 
 出力例：
 
 ```
-=== 2026-05-20 09:00 シグナル ===
-[BUY   0.70] 5016 JX金属
-  - 25日線が75日線を上回る（ゴールデンクロス傾向）
-  - 終値が25日線を上回る
-  リスク: 決算日程は別途確認すること。価格・出来高は yfinance の遅延データの可能性あり。
-[WATCH 0.30] 6701 NEC
-  - 終値が25日線を上回る
+====================================================
+  シグナル 2026-05-23 09:00
+  BUY候補: 5  WATCH: 8  合計: 13
+====================================================
 
-保存先: ./signals/2026-05-20.json
+【量子】 [2BUY]
+  [BUY   1.00] RGTI   Rigetti Computing
+    - 25日線が75日線を上回る（ゴールデンクロス傾向）
+    - 出来高が20日平均の2.04倍
+    - 終値が25日線を上回る
+    💬 出来高急増を伴うGC成立は上昇モメンタムが強い。短期的な過熱感にも注意。
+    ⚠ 決算日程は別途確認すること。
 ```
 
-## しきい値の変え方
+## LINE 通知の設定
 
-`config.yaml` の `rules` を編集：
+1. [LINE Developers Console](https://developers.line.biz/) でチャネルを作成（Messaging API）
+2. `Channel Access Token` を発行 → `.env` の `LINE_CHANNEL_ACCESS_TOKEN` に設定
+3. LINE Official Account の QR コードを共有するだけで友達全員に届く
+
+GitHub Actions での自動実行時は Secrets に `LINE_CHANNEL_ACCESS_TOKEN`（と任意で `ANTHROPIC_API_KEY`）を登録してください。
+
+## 設定のカスタマイズ
+
+`config.yaml` の `rules` でしきい値を変更できます：
 
 ```yaml
 rules:
@@ -59,44 +97,38 @@ rules:
   lookback_days: 120        # 取得期間
 ```
 
-スコアの重み（GC=0.4, 出来高=0.3, 短期上昇=0.3）と判定閾値（0.5）は `agent/signal.py` の定数で調整できます。
+`watchlist` に銘柄を追加する場合：
 
-## 監視銘柄の変更
+```yaml
+watchlist:
+  - { code: "6758", name: "ソニーグループ", theme: "AI/DX" }
+  - { code: "TSLA", name: "Tesla",         theme: "自動車" }
+```
 
-`config.yaml` の `watchlist` に `{ code: "xxxx", name: "..." }` を追加するだけです。
-東証銘柄は数字4桁の `code` を入れれば `.T` を自動付与します。
-
-> 注: Kioxia (285A) のような英字混じりの新型コードは yfinance での取扱いが不安定なため、初期 watchlist からは除外しています。試したい場合は追加して挙動を確認してください（失敗時は警告ログでスキップされます）。
+東証銘柄は数字コードを入れると `.T` を自動付与します（例: `6758` → `6758.T`）。
 
 ## ファイル構成
 
 ```
 stock-signal-agent/
-├── README.md
+├── main.py                # CLI エントリ
+├── config.yaml            # watchlist・ルール設定
 ├── requirements.txt
-├── config.yaml
-├── main.py                # CLIエントリ
-├── signals/               # 出力先
+├── .env.example
+├── .github/workflows/
+│   └── daily_signal.yml   # 平日 09:00 JST 自動実行
+├── signals/               # 出力 JSON（gitignore）
 └── agent/
-    ├── __init__.py
     ├── models.py          # Signal dataclass
-    ├── data.py            # 価格データ取得 (yfinance)
-    ├── signal.py          # ルール評価 + llm_evaluate フック
-    └── notify.py          # 整形 / JSON保存 / execute フック
+    ├── data.py            # 価格データ取得（yfinance）
+    ├── signal.py          # ルール評価 + llm_evaluate
+    └── notify.py          # 整形 / JSON 保存 / LINE 通知
 ```
 
 ## 将来の拡張ポイント
 
-- **LLM 評価の差し込み**: `agent/signal.py` の `llm_evaluate(signals)` が現在パススルー。
-  ここでニュースや決算等の定性情報を踏まえて `conviction` を上書き／`reasons` を追記する。
-- **発注実行**: `agent/notify.py` の `execute(signal)` が現在 stub（ログ出力のみ）。
-  証券会社 API クライアントをここに差し込めば、`buy_candidate` を発注に流せる構造。
-- **決算カレンダー連携**: `risk_notes` を固定文言から、実際の決算日程に基づいた動的注記へ。
-- **シグナル種別の追加**: 出来高急減・乖離率・RSI 等を追加し重み付けを再調整。
-
-## 設計メモ
-
-- 3層（`data` / `signal` / `notify`）を `Signal` dataclass だけで疎結合化。
-- 全条件 AND ではなくスコア合算式。LLM 評価を後段で重ねやすい。
-- データ取得は失敗しても他銘柄の処理を止めない（警告ログでスキップ）。
-- タイムゾーンは Asia/Tokyo 固定。
+- **バックテスト**: 過去シグナルと実際の株価変動を照合して精度検証
+- **ヒートマップ表示**: `rich` ライブラリでテーマ×コンビクションの視覚化
+- **履歴 DB 化**: SQLite にシグナル履歴を蓄積してトレンド分析
+- **ニュース連携**: RSS・スクレイピングで定性情報を LLM に渡す
+- **決算カレンダー連携**: `risk_notes` を実際の決算日程に基づいた動的注記へ
