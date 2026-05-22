@@ -1,0 +1,71 @@
+# 監視銘柄。code は東証コード（yfinance では ".T" を自動付与）、または米国ティッカー。
+# 注: Kioxia (285A) は yfinance での取扱いが不安定なため警告ログでスキップされる場合あり。
+watchlist:
+  # ── 半導体：製造装置 ─────────────────────────────
+  - { code: "8035", name: "東京エレクトロン",       theme: "半導体/製造装置" }
+  - { code: "6920", name: "レーザーテック",          theme: "半導体/製造装置" }
+  - { code: "6146", name: "ディスコ",               theme: "半導体/製造装置" }
+  - { code: "6254", name: "KOKUSAI ELECTRIC",       theme: "半導体/製造装置" }
+  - { code: "AMAT", name: "Applied Materials",      theme: "半導体/製造装置" }
+  - { code: "ASML", name: "ASML Holding",           theme: "半導体/製造装置" }
+
+  # ── 半導体：テスト・検査 ─────────────────────────
+  - { code: "6857", name: "アドバンテスト",          theme: "半導体/テスト" }
+
+  # ── 半導体：設計・ロジック ───────────────────────
+  - { code: "6526", name: "ソシオネクスト",          theme: "半導体/設計" }
+  - { code: "6723", name: "ルネサスエレクトロニクス", theme: "半導体/設計" }
+  - { code: "NVDA", name: "NVIDIA",                 theme: "半導体/設計" }
+  - { code: "AMD",  name: "AMD",                    theme: "半導体/設計" }
+  - { code: "AVGO", name: "Broadcom",               theme: "半導体/設計" }
+  - { code: "ARM",  name: "Arm Holdings",           theme: "半導体/設計" }
+  - { code: "INTC", name: "Intel",                  theme: "半導体/設計" }
+
+  # ── 半導体：メモリ ───────────────────────────────
+  - { code: "285A", name: "キオクシア",              theme: "半導体/メモリ" }
+  - { code: "MU",   name: "Micron Technology",      theme: "半導体/メモリ" }
+
+  # ── 半導体：素材・ウェーハ ───────────────────────
+  - { code: "4063", name: "信越化学工業",            theme: "半導体/素材" }
+  - { code: "3436", name: "SUMCO",                  theme: "半導体/素材" }
+
+  # ── 半導体：受託製造 ─────────────────────────────
+  - { code: "TSM",  name: "TSMC",                   theme: "半導体/製造" }
+
+  # ── フォトニクス ─────────────────────────────────
+  - { code: "6519", name: "QDレーザ",               theme: "フォトニクス" }
+  - { code: "6965", name: "浜松ホトニクス",          theme: "フォトニクス" }
+  - { code: "5803", name: "Fujikura",               theme: "フォトニクス" }
+  - { code: "COHR", name: "Coherent Corp",          theme: "フォトニクス" }
+
+  # ── 量子コンピュータ ─────────────────────────────
+  - { code: "6702", name: "富士通",                 theme: "量子" }
+  - { code: "IONQ", name: "IonQ",                   theme: "量子" }
+  - { code: "RGTI", name: "Rigetti Computing",      theme: "量子" }
+  - { code: "QBTS", name: "D-Wave Quantum",         theme: "量子" }
+
+  # ── 宇宙 ─────────────────────────────────────────
+  - { code: "5595", name: "QPS研究所",              theme: "宇宙" }
+  - { code: "RKLB", name: "Rocket Lab",             theme: "宇宙" }
+  - { code: "ASTS", name: "AST SpaceMobile",        theme: "宇宙" }
+
+  # ── ネオクラウド / AI インフラ ────────────────────
+  - { code: "3778", name: "さくらインターネット",    theme: "ネオクラウド" }
+  - { code: "6701", name: "NEC",                    theme: "ネオクラウド" }
+
+  # ── AI / DX ──────────────────────────────────────
+  - { code: "4392", name: "FIG",                    theme: "AI/DX" }
+
+  # ── コングロマリット・商社 ────────────────────────
+  - { code: "5016", name: "JX金属",                 theme: "素材/資源" }
+  - { code: "8001", name: "伊藤忠商事",              theme: "商社" }
+  - { code: "7203", name: "トヨタ自動車",            theme: "自動車" }
+
+rules:
+  volume_spike_ratio: 1.5   # 出来高が20日平均の何倍で「急増」とみなすか
+  ma_short: 25              # 短期移動平均（日）
+  ma_long: 75               # 長期移動平均（日）
+  lookback_days: 120        # 取得する過去日数
+
+output:
+  json_dir: "./signals"     # シグナルJSONの出力先
