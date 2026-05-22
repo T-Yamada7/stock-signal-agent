@@ -60,22 +60,24 @@ def _build_facets(text: str) -> list:
 
     facets = []
 
+    F = models.AppBskyRichtextFacet
+
     # URL
     for m in re.finditer(r'https?://[^\s\n]+', text):
         byte_start = len(text[:m.start()].encode('utf-8'))
         byte_end   = len(text[:m.end()].encode('utf-8'))
-        facets.append(models.AppBskyRichtextFacet(
-            features=[models.AppBskyRichtextFacetLink(uri=m.group())],
-            index=models.AppBskyRichtextFacetByteSlice(byte_start=byte_start, byte_end=byte_end),
+        facets.append(F.Main(
+            features=[F.Link(uri=m.group())],
+            index=F.ByteSlice(byte_start=byte_start, byte_end=byte_end),
         ))
 
     # ハッシュタグ（日本語含む）
     for m in re.finditer(r'#([^\s#\n]+)', text):
         byte_start = len(text[:m.start()].encode('utf-8'))
         byte_end   = len(text[:m.end()].encode('utf-8'))
-        facets.append(models.AppBskyRichtextFacet(
-            features=[models.AppBskyRichtextFacetTag(tag=m.group(1))],
-            index=models.AppBskyRichtextFacetByteSlice(byte_start=byte_start, byte_end=byte_end),
+        facets.append(F.Main(
+            features=[F.Tag(tag=m.group(1))],
+            index=F.ByteSlice(byte_start=byte_start, byte_end=byte_end),
         ))
 
     return facets
