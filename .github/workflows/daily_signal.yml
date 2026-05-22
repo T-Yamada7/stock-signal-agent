@@ -25,3 +25,9 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python main.py --notify-line --dry-run
+
+      - name: Weekly backtest & notify LINE (Monday only)
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        run: |
+          [ "$(date +%u)" = "1" ] && python main.py --backtest --notify-line || true

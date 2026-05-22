@@ -151,6 +151,86 @@ def send_line(signals: list[Signal]) -> None:
         log.error("LINE通知に失敗しました: %s %s", resp.status_code, resp.text)
 
 
+def send_line_backtest(records: list) -> None:
+    """バックテスト結果をLINEブロードキャストで送信する。"""
+    from .backtest import _FWD_DAYS, _stats, BacktestRecord
+    from collections import defaultdict
+
+    token = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+    if not token:
+        log.warning("LINE_CHANNEL_ACCESS_TOKEN が未設定です。.env を確認してください。")
+        return
+    if not records:
+        log.info("バックテスト結果なし。LINE通知をスキップします。")
+        return
+
+    dates = sorted({r.as_of for r in records})
+    lines = [
+        f"📊 週次バックテスト {dates[0][5:]} 〜 {dates[-1][5:]}",
+        f"{len(dates)}サイクル・{len(records)}シグナル",
+        "",
+        "【数字の読み方】",
+        "勝率：その後上昇した割合",
+        "平均：平均騰落率（+がプラス）",
+        "+5d=5営業日後（約1週間）",
+        "+10d=10営業日後（約2週間）",
+        "+20d=20営業日後（約1ヶ月）",
+        "",
+    ]
+
+    # 全体サマリー
+    row_cells = []
+    for fwd in _FWD_DAYS:
+        wr, avg = _stats(records, fwd)
+        if wr is None:
+            row_cells.append(f"+{fwd}d  N/A")
+        else:
+            emoji = "🔥" if (wr >= 0.7 and avg >= 0.05) else ("⚠" if avg < 0 else "")
+            row_cells.append(f"+{fwd}d  {wr*100:.0f}%{avg*100:+.1f}%{emoji}")
+    lines.append("【全体】")
+    lines.extend(row_cells)
+
+    # テーマ別（+10d、2件以上）
+    by_theme: dict = defaultdict(list)
+    for r in records:
+        by_theme[r.theme or "その他"].append(r)
+
+    theme_rows = []
+    for theme, recs in by_theme.items():
+        if len(recs) < 2:
+            continue
+        wr, avg = _stats(recs, 10)
+        if wr is None:
+            continue
+        emoji = "🔥" if (wr >= 0.7 and avg >= 0.05) else ("⚠" if avg < 0 else "")
+        theme_rows.append((avg, f"{theme[:10]}  {wr*100:.0f}%{avg*100:+.1f}%{emoji}"))
+
+    if theme_rows:
+        lines.append("")
+        lines.append("【テーマ別 +10d】")
+        for _, row in sorted(theme_rows, reverse=True):
+            lines.append(row)
+
+    lines.append("")
+    lines.append("─────────────────")
+    lines.append("※過去実績。将来の利益を保証しません")
+
+    message = "\n".join(lines)
+    resp = requests.post(
+        "https://api.line.me/v2/bot/message/broadcast",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        json={"messages": [{"type": "text", "text": message}]},
+        timeout=10,
+    )
+    if resp.status_code == 200:
+        log.info("バックテストLINE通知を送信しました。")
+    else:
+        log.error("LINE通知に失敗しました: %s %s", resp.status_code, resp.text)
+
+
 def execute(signal: Signal) -> None:
     """発注などの実行差し替え口。プロトタイプではログ出力のみ（stub）。"""
     log.info("execute() stub: %s %s conviction=%.2f", signal.symbol, signal.action, signal.conviction)

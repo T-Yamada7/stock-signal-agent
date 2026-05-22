@@ -10,7 +10,7 @@ import yaml
 
 from agent.data import fetch_prices
 from agent.signal import generate_signals, llm_evaluate
-from agent.notify import render, save_json, send_line
+from agent.notify import render, save_json, send_line, send_line_backtest
 from agent.backtest import run_backtest, render_backtest
 
 
@@ -60,6 +60,8 @@ def main() -> int:
     if args.backtest:
         bt_records = run_backtest(price_data, watchlist, rules)
         print(render_backtest(bt_records))
+        if args.notify_line:
+            send_line_backtest(bt_records)
         return 0
 
     signals = generate_signals(price_data, watchlist, rules)
