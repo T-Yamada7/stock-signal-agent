@@ -1,4 +1,6 @@
-"""価格データ取得層。watchlist を受け取り {code: DataFrame} を返す。"""
+"""
+価格データ取得層。watchlist を受け取り {code: DataFrame} を返す。
+"""
 from __future__ import annotations
 
 import logging
