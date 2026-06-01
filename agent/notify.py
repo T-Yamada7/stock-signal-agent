@@ -3,14 +3,15 @@ from __future__ import annotations
 
 import logging
 import os
-from dotenv import load_dotenv
-load_dotenv()
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
 import requests
 
 from .models import Signal
+
+from dotenv import load_dotenv
+load_dotenv()
 
 log = logging.getLogger(__name__)
 

@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import logging
 import os
-from dotenv import load_dotenv
-load_dotenv()
-
-import pandas as pd
 
 from .models import Signal
-from .evaluate_one import _evaluate_one
+
+from dotenv import load_dotenv
+load_dotenv()
 
 log = logging.getLogger(__name__)
 
@@ -19,7 +17,7 @@ _LLM_SYSTEM = """\
 """
 
 
-def llm_evaluate(signals: list[Signal]) -> list[Signal]:
+def generate_llm_comment(signals: list[Signal]) -> list[Signal]:
     """BUY候補シグナルにClaude Haikuの定性コメントを付与する。
     ANTHROPIC_API_KEY が未設定の場合はパススルー。
     """
