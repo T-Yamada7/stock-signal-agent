@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 import pandas as pd
 
-from .signal import generate_signals
+from .generate_signals import generate_signals
 
 log = logging.getLogger(__name__)
 

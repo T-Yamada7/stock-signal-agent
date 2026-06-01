@@ -1,17 +1,16 @@
-"""通知層。標準出力整形 / JSON保存 / LINE通知 / execute (stub)。"""
+"""通知層。標準出力整形 / LINE通知 / execute (stub)。"""
 from __future__ import annotations
 
-import json
 import logging
 import os
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
 import requests
-from dotenv import load_dotenv
 
 from .models import Signal
 
+from dotenv import load_dotenv
 load_dotenv()
 
 log = logging.getLogger(__name__)
@@ -68,20 +67,6 @@ def render(signals: list[Signal]) -> str:
                     lines.append(f"    💬 {s.llm_comment}")
                 lines.append(f"    ⚠ {s.risk_notes}")
     return "\n".join(lines)
-
-
-def save_json(signals: list[Signal], json_dir: str) -> str:
-    """シグナル全件を1ファイルに保存。保存先パスを返す。"""
-    os.makedirs(json_dir, exist_ok=True)
-    fname = datetime.now(JST).strftime("%Y-%m-%d") + ".json"
-    path = os.path.join(json_dir, fname)
-    payload = {
-        "generated_at": datetime.now(JST).isoformat(timespec="seconds"),
-        "signals": [s.to_dict() for s in signals],
-    }
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    return path
 
 
 def _reason_codes(reasons: list[str]) -> str:
@@ -231,6 +216,3 @@ def send_line_backtest(records: list) -> None:
         log.error("LINE通知に失敗しました: %s %s", resp.status_code, resp.text)
 
 
-def execute(signal: Signal) -> None:
-    """発注などの実行差し替え口。プロトタイプではログ出力のみ（stub）。"""
-    log.info("execute() stub: %s %s conviction=%.2f", signal.symbol, signal.action, signal.conviction)

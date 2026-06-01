@@ -83,7 +83,7 @@ def _build_facets(text: str) -> list:
     return facets
 
 
-def send_bluesky(signals: list[Signal]) -> None:
+def bluesky_post(signals: list[Signal]) -> None:
     """BUY候補シグナルをBlueskyに投稿する。"""
     handle   = os.getenv("BSKY_HANDLE")
     password = os.getenv("BSKY_APP_PASSWORD")

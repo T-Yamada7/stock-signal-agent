@@ -10,11 +10,7 @@ log = logging.getLogger(__name__)
 
 import yaml
 
-from agent.data import fetch_prices
-from agent.signal import generate_signals, llm_evaluate
-from agent.notify import render, save_json, send_line, send_line_backtest
-from agent.bluesky_post import send_bluesky
-from agent.backtest import run_backtest, render_backtest
+from agent import *
 
 
 def load_config(path: str) -> dict:
@@ -33,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--backtest-months", type=int, default=2, choices=[2, 3, 6, 9, 12],
                    help="バックテストの遡り期間（月数）。デフォルト2")
     p.add_argument("-v", "--verbose", action="store_true", help="DEBUGログを出す")
-    p.add_argument("--istest", action="store_true", help="テスト環境でLLM呼び出しをキャンセルしたい，かつenvファイルのURLのコメントアウトが面倒なとき,このオプションをつける")
+    p.add_argument("--notllm", action="store_true", help="テスト環境でLLM呼び出しをキャンセルしたい，かつenvファイルのURLのコメントアウトが面倒なとき,このオプションをつける")
     return p.parse_args()
 
 
@@ -84,8 +80,8 @@ def main() -> int:
     signals = generate_signals(price_data, watchlist, rules)
 
     #args.isTest:テスト環境でLLM呼び出しいらんとき，わざわざAPIキーのコメントアウトをするのが面倒になると思い，CLI引数のオプションでLLM呼び出しキャンセルできるようにしたいと思った
-    if not args.istest:
-        signals = llm_evaluate(signals)
+    if not args.notllm:
+        signals = generate_llm_comment(signals)
 
     if not args.json_only:
         print(render(signals))
@@ -94,7 +90,7 @@ def main() -> int:
         send_line(signals)
 
     if args.post_bsky:
-        send_bluesky(signals)
+        bluesky_post(signals)
 
     if not args.dry_run:
         path = save_json(signals, json_dir)
