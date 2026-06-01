@@ -132,6 +132,7 @@ def llm_evaluate(signals: list[Signal]) -> list[Signal]:
     """BUY候補シグナルにClaude Haikuの定性コメントを付与する。
     ANTHROPIC_API_KEY が未設定の場合はパススルー。
     """
+    
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         log.info("ANTHROPIC_API_KEY 未設定。LLM評価をスキップします。")

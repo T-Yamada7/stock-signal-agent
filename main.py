@@ -33,6 +33,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--backtest-months", type=int, default=2, choices=[2, 3, 6, 9, 12],
                    help="バックテストの遡り期間（月数）。デフォルト2")
     p.add_argument("-v", "--verbose", action="store_true", help="DEBUGログを出す")
+    p.add_argument("--istest", action="store_true", help="テスト環境でLLM呼び出しをキャンセルしたい，かつenvファイルのURLのコメントアウトが面倒なとき,このオプションをつける")
     return p.parse_args()
 
 
@@ -49,20 +50,23 @@ def main() -> int:
         return 1
 
     cfg = load_config(str(cfg_path))
-    watchlist = cfg.get("watchlist", [])
     rules = cfg.get("rules", {})
     json_dir = cfg.get("output", {}).get("json_dir", "./signals")
-    lookback = int(rules.get("lookback_days", 120))
+
+    watchlist = cfg.get("watchlist", [])
 
     if not watchlist:
         print("watchlist が空です。config.yaml を確認してください。", file=sys.stderr)
         return 1
 
+    lookback = int(rules.get("lookback_days", 120))
     price_data = fetch_prices(watchlist, lookback_days=lookback)
+
     if not price_data:
         print("すべての銘柄で価格データ取得に失敗しました。", file=sys.stderr)
         return 2
 
+    
     if args.backtest:
         months = args.backtest_months
         # 必要取得日数: MA75 + 遡り期間 + forward20日 + バッファ
@@ -78,7 +82,10 @@ def main() -> int:
         return 0
 
     signals = generate_signals(price_data, watchlist, rules)
-    signals = llm_evaluate(signals)
+
+    #args.isTest:テスト環境でLLM呼び出しいらんとき，わざわざAPIキーのコメントアウトをするのが面倒になると思い，CLI引数のオプションでLLM呼び出しキャンセルできるようにしたいと思った
+    if not args.istest:
+        signals = llm_evaluate(signals)
 
     if not args.json_only:
         print(render(signals))
